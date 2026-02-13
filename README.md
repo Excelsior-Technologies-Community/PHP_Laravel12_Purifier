@@ -1,59 +1,360 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# PHP_LARAVEL12_PURIFIER
+```php
+A Laravel 12 based web application demonstrating HTML sanitization and XSS protection using Laravel Purifier, built with clean MVC architecture.
+```
+# Key Features
+```php
+- Laravel 12 Compatible
+- HTML Sanitization & XSS Protection
+- Secure User Input Handling
+- Clean MVC Architecture
+- Beginner Friendly Setup
+- Configurable Allowed HTML Tags
+- Real-world CMS / Blog Use Case
+- Lightweight & Easy Integration
+```
+# Step 1: Install Fresh Laravel 12 Application
+Open Terminal / Command Prompt and run:
+```php
+composer create-project laravel/laravel:^12.0 PHP_Laravel12_Purifier
+```
+Move into project directory:
+```php
+cd PHP_Laravel12_Purifier
+```
+Generate application key:
+```php
+php artisan key:generate
+```
+# Explanation
+```php
+- Installs a fresh Laravel 12 project
+- Application key is required for encryption, sessions, and security
+```
+# Step 2: Configure Environment & Database
+Open .env file and update database configuration:
+```php
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3307
+DB_DATABASE=php_laravel12_purifier
+DB_USERNAME=root
+DB_PASSWORD=
+```
+Run default migrations:
+```php
+php artisan migrate
+```
+# Explanation
+```php
+- .env manages environment configuration
+- Default migrations create Laravel system tables
+- Confirms database connection is working
+```
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+# Step 3: Install Laravel Purifier Package
+Install Laravel Purifier package using Composer:
+```php
+composer require mews/purifier
+```
+Publish Purifier configuration file:
+```php
+php artisan vendor:publish --provider="Mews\Purifier\PurifierServiceProvider"
+```
+# Explanation
+```php
+- Installs Laravel Purifier package
+- Publishes config/purifier.php for customization
+- Enables HTML sanitization features
+```
 
-## About Laravel
+# Step 4: Create Posts Table
+Generate model and migration:
+```php
+php artisan make:model Post -m
+```
+Update migration file:
+```php
+<?php
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+{
+    Schema::create('posts', function (Blueprint $table) {
+        $table->id();
+        $table->string('title');
+        $table->text('description');
+        $table->timestamps();
+    });
+}
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
-## Learning Laravel
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('posts');
+    }
+};
+```
+Run migration:
+```php
+php artisan migrate
+```
+# Explanation
+```php
+- Creates posts table
+- Stores user-submitted HTML content
+- Used to demonstrate Purifier functionality
+```
+# Step 5: Create Controller
+Generate controller:
+```php
+php artisan make:controller PostController
+```
+```php
+<?php
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+namespace App\Http\Controllers;
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+use Illuminate\Http\Request;
+use App\Models\Post;
+use Purifier;
 
-## Laravel Sponsors
+class PostController extends Controller
+{
+    public function create()
+    {
+        return view('create');
+    }
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+    public function store(Request $request)
+    {
+        $request->validate([
+            'title' => 'required',
+            'description' => 'required'
+        ]);
 
-### Premium Partners
+        Post::create([
+            'title' => $request->title,
+            'description' => Purifier::clean($request->description)
+        ]);
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+        return redirect()->back()->with('success', 'Post Saved Successfully!');
+    }
+}
+```
+# Explanation
+```php
+- Controller handles form requests
+- Applies Purifier before saving data
+- Keeps business logic organized
+```
+# Step 6: Configure Web Routes
+Open file:
+```php
+routes/web.php
+```
+```php
+<?php
 
-## Contributing
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PostController;
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Route::get('/', function () {
+    return view('welcome');
+});
 
-## Code of Conduct
+Route::get('/post/create', [PostController::class, 'create']);
+Route::post('/post/store', [PostController::class, 'store'])->name('post.store');
+```
+# Explanation
+```php
+- Defines form display route
+- Handles form submission securely
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# Step 7: Blade UI Structure
+Views folder structure:
+```php
+resources/views/
+└── create.blade.php
+```
+```php
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Laravel 12 Purifier Demo</title>
 
-## Security Vulnerabilities
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
 
-## License
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Create Post (Laravel 12 + Purifier)</h4>
+                </div>
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+                <div class="card-body">
+
+                    @if(session('success'))
+                        <div class="alert alert-success">
+                            {{ session('success') }}
+                        </div>
+                    @endif
+
+                    <form action="{{ route('post.store') }}" method="POST">
+                        @csrf
+
+                        <!-- Title -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Title</label>
+                            <input type="text" name="title" class="form-control" placeholder="Enter post title">
+                            @error('title')
+                                <small class="text-danger">{{ $message }}</small>
+                            @enderror
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">
+                                Description
+                                <!-- <small class="text-muted">(Try adding &lt;script&gt; tag)</small> -->
+                            </label>
+                            <textarea name="description" class="form-control" rows="5"
+                                placeholder="Enter HTML content here..."></textarea>
+                            @error('description')
+                                <small class="text-danger">{{ $message }}</small>
+                            @enderror
+                        </div>
+
+                        <!-- Submit -->
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-success px-4">
+                                💾 Save Post
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+```
+# Explanation
+```php
+- Blade template provides UI
+- User enters HTML content
+- Used to test XSS protection
+```
+# Step 8: Apply Laravel Purifier in Controller
+Inside PostController:
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Post;
+use Purifier;
+
+class PostController extends Controller
+{
+    public function create()
+    {
+        return view('create');
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'title' => 'required',
+            'description' => 'required'
+        ]);
+
+        Post::create([
+            'title' => $request->title,
+            'description' => Purifier::clean($request->description)
+        ]);
+
+        return redirect()->back()->with('success', 'Post Saved Successfully!');
+    }
+}
+```
+# Explanation
+```php
+- Purifier::clean() removes malicious HTML
+- Blocks <script> and unsafe attributes
+- Allows only safe HTML tags
+```
+
+# Step 9: Run Laravel Project
+Start Laravel development server:
+```php
+php artisan serve
+```
+
+# Step 10: Open Browser
+Create Post Page:
+```php
+http://127.0.0.1:8000/post/create
+```
+<img width="1347" height="634" alt="image" src="https://github.com/user-attachments/assets/a2b6a8ca-b65f-4a13-92ae-d254d649e424" />
+
+# Explanation
+```php
+- Runs Laravel locally
+- Opens Purifier demo form
+- User input is sanitized before database storage
+```
+
+# Project Folder Structure
+```php
+PHP_LARAVEL12_PURIFIER
+├── app/
+│   ├── Models/
+│   │   └── Post.php
+│   └── Http/
+│       └── Controllers/
+│           └── PostController.php
+│
+├── resources/
+│   └── views/
+│       └── create.blade.php
+│
+├── routes/
+│   └── web.php
+│
+├── database/
+│   └── migrations/
+│
+├── config/
+│   └── purifier.php
+│
+├── .env
+├── artisan
+└── composer.json
+```
+
+
