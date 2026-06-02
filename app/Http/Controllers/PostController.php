@@ -25,6 +25,30 @@ class PostController extends Controller
             'description' => Purifier::clean($request->description)
         ]);
 
-        return redirect()->back()->with('success', 'Post Saved Successfully!');
+        return redirect()
+                ->route('posts.index')
+                ->with('success', 'Post Saved Successfully!');
+    }
+
+    public function index(Request $request)
+    {
+        $search = $request->search;
+
+        $posts = Post::when($search, function ($query) use ($search) {
+
+            $query->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+
+        })->oldest()
+          ->paginate(3);
+
+        return view('index', compact('posts'));
+    }
+
+    public function destroy(Post $post)
+    {
+        $post->delete();
+
+        return back()->with('success', 'Post Deleted Successfully!');
     }
 }
