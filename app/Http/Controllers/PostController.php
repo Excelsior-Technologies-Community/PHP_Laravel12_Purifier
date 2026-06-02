@@ -26,8 +26,8 @@ class PostController extends Controller
         ]);
 
         return redirect()
-                ->route('posts.index')
-                ->with('success', 'Post Saved Successfully!');
+            ->route('posts.index')
+            ->with('success', 'Post Saved Successfully!');
     }
 
     public function index(Request $request)
@@ -37,10 +37,10 @@ class PostController extends Controller
         $posts = Post::when($search, function ($query) use ($search) {
 
             $query->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                ->orWhere('description', 'like', "%{$search}%");
 
         })->oldest()
-          ->paginate(3);
+            ->paginate(3);
 
         return view('index', compact('posts'));
     }
