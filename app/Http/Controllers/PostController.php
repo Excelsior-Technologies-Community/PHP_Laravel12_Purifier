@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Post;
 use Purifier;
 
+
 class PostController extends Controller
 {
     public function create()
@@ -35,14 +36,40 @@ class PostController extends Controller
         $search = $request->search;
 
         $posts = Post::when($search, function ($query) use ($search) {
-
             $query->where('title', 'like', "%{$search}%")
                 ->orWhere('description', 'like', "%{$search}%");
-
-        })->oldest()
+        })
+            ->oldest()
             ->paginate(3);
 
         return view('index', compact('posts'));
+    }
+
+    // ✏️ EDIT PAGE
+    public function edit(Post $post)
+    {
+        return view('edit', compact('post'));
+    }
+
+    // 🔄 UPDATE POST
+    public function update(Request $request, Post $post)
+    {
+        $request->validate([
+            'title' => 'required',
+            'description' => 'required'
+        ]);
+
+        $raw = $request->description;
+        $clean = Purifier::clean($raw);
+
+        $post->update([
+            'title' => $request->title,
+            'description' => $clean,
+        ]);
+
+        return redirect()
+            ->route('posts.index')
+            ->with('success', 'Post Updated Successfully!');
     }
 
     public function destroy(Post $post)
@@ -50,5 +77,37 @@ class PostController extends Controller
         $post->delete();
 
         return back()->with('success', 'Post Deleted Successfully!');
+    }
+
+    public function export()
+    {
+        $fileName = 'posts.csv';
+
+        $posts = Post::all();
+
+        $headers = [
+            "Content-type" => "text/csv",
+            "Content-Disposition" => "attachment; filename=$fileName",
+        ];
+
+        $callback = function () use ($posts) {
+            $file = fopen('php://output', 'w');
+
+            // CSV header
+            fputcsv($file, ['ID', 'Title', 'Description', 'Created At']);
+
+            foreach ($posts as $post) {
+                fputcsv($file, [
+                    $post->id,
+                    $post->title,
+                    strip_tags($post->description),
+                    $post->created_at
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

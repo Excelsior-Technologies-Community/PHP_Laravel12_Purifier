@@ -169,7 +169,7 @@
 
         .pagination {
             justify-content: center;
-            
+
         }
 
         .page-item {
@@ -203,6 +203,33 @@
             border-radius: 10px;
             font-size: 13px;
         }
+
+        .btn-dashboard {
+            background: #2563eb;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: none;
+            height: 44px;
+        }
+
+        .btn-dashboard:hover {
+            background: #1d4ed8;
+            color: white;
+        }
+
+        .btn-export {
+            background: #16a34a;
+        }
+
+        .btn-export:hover {
+            background: #15803d;
+        }
     </style>
 
 </head>
@@ -223,16 +250,25 @@
                 </p>
             </div>
 
-            <a href="/post/create" class="btn btn-add text-white">
-                ➕ Add New Post
-            </a>
+            <!-- RIGHT SIDE BUTTONS WRAPPER -->
+            <div class="d-flex align-items-center gap-2">
+
+                <a href="/post/create" class="btn btn-dashboard">
+                    ➕ Add New Post
+                </a>
+
+                <a href="{{ route('posts.export') }}" class="btn btn-dashboard btn-export">
+                    ⬇️ Export CSV
+                </a>
+
+            </div>
 
         </div>
 
         @if(session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
         @endif
 
         <div class="row mb-4">
@@ -294,7 +330,7 @@
                             <th>ID</th>
                             <th>Title</th>
                             <th>Description</th>
-                            <th width="150">Action</th>
+                            <th width="150" class="text-center">Action</th>
                         </tr>
                     </thead>
 
@@ -302,61 +338,70 @@
 
                         @forelse($posts as $post)
 
-                            <tr>
+                        <tr>
 
-                                <td>
-                                    <span class="post-id">
-                                        #{{ $post->id }}
-                                    </span>
-                                </td>
+                            <td>
+                                <span class="post-id">
+                                    #{{ $post->id }}
+                                </span>
+                            </td>
 
-                                <td>
-                                    <strong>{{ $post->title }}</strong>
-                                </td>
+                            <td>
+                                <strong>{{ $post->title }}</strong>
+                            </td>
 
-                                <td>
-                                    {{ \Illuminate\Support\Str::limit(strip_tags($post->description), 60) }}
-                                </td>
+                            <td>
+                                {{ \Illuminate\Support\Str::limit(strip_tags($post->description), 60) }}
+                            </td>
 
-                                <td>
+                            <td class="align-middle text-center">
 
-                                    <form action="{{ route('posts.destroy', $post->id) }}" method="POST">
+                                <a href="{{ route('posts.edit', $post->id) }}"
+                                    class="btn btn-sm btn-outline-warning p-1"
+                                    title="Edit">
+                                    ✏️
+                                </a>
 
-                                        @csrf
-                                        @method('DELETE')
+                                <form action="{{ route('posts.destroy', $post->id) }}"
+                                    method="POST"
+                                    class="d-inline">
 
-                                        <button onclick="return confirm('Delete this post?')"
-                                            class="btn btn-danger btn-sm btn-delete">
+                                    @csrf
+                                    @method('DELETE')
 
-                                            🗑 Delete
+                                    <button class="btn btn-sm btn-outline-danger p-1"
+                                        onclick="return confirm('Delete this post?')"
+                                        title="Delete">
 
-                                        </button>
+                                        🗑️
 
-                                    </form>
+                                    </button>
 
-                                </td>
+                                </form>
 
-                            </tr>
+                            </td>
+
+                        </tr>
 
                         @empty
 
-                            <tr>
+                        <tr>
 
-                                <td colspan="4">
+                            <td colspan="4">
 
-                                    <div class="empty-state">
+                                <div class="empty-state">
 
-                                        <h4>No Posts Found</h4>
+                                    <h4>No Posts Found</h4>
 
-                                        <p>
-                                            Create your first post to get started.
-                                        </p>
+                                    <p>
+                                        Create your first post to get started.
+                                    </p>
 
-                                    </div>
+                                </div>
 
-                                </td>
+                            </td>
 
-                            </tr>
+                        </tr>
 
                         @endforelse
 
@@ -382,7 +427,7 @@
 
                     </li>
 
-                @endfor
+                    @endfor
 
             </ul>
 
